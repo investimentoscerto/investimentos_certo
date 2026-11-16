@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Carteira Rico</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div>
+        <h1>Carteira Rico</h1>
+        <p id="status-conexao">Sincronizando...</p>
+      </div>
+      <div class="header-dir">
+        <button id="btn-privacidade" class="btn-privacidade" onclick="alternarPrivacidade()" title="Ocultar valores">👁️</button>
+        <span class="badge-mes" id="mes-atual-label">--/----</span>
+      </div>
+    </header>
+
+    <!-- ABA 1: RESUMO -->
+    <main id="tab-resumo" class="tab-content active">
+      <!-- Card Meta Principal com Barra de Porcentagem Destacada -->
+      <section class="card card-destaque">
+        <div class="card-topo">
+          <span class="label">Sua Meta de Renda Mensal</span>
+          <span class="pill" id="perc-meta">0%</span>
+        </div>
+        <div class="valor-grande valor-sensivel" id="renda-atual">R$ 0,00</div>
+
+        <div class="barra-bg barra-grande">
+          <div class="barra-fill" id="barra-meta" style="width: 0%"></div>
+          <span class="barra-texto-centro" id="texto-barra-meta">0% concluído</span>
+        </div>
+
+        <div class="card-rodape">
+          <span>Meta: <strong class="valor-sensivel" id="meta-renda-label">R$ 0,00</strong></span>
+          <span class="valor-sensivel" id="falta-renda-label">Faltam R$ 0,00</span>
+        </div>
+      </section>
+
+      <!-- Card Mini-Metas / Conquistas Reais -->
+      <section class="card">
+        <div class="card-topo">
+          <span class="label">🎯 Próxima Conquista</span>
+          <span class="pill pill-verde" id="prox-conquista-perc">0%</span>
+        </div>
+        <div class="conquista-destaque" id="prox-conquista-titulo">Cafezinho grátis (R$ 20/mês)</div>
+        <div class="barra-bg" style="margin: 8px 0;">
+          <div class="barra-fill" id="barra-conquista" style="width: 0%"></div>
+        </div>
+        <div class="dica valor-sensivel" id="prox-conquista-falta">Faltam R$ 20,00/mês para desbloquear</div>
+
+        <div class="grid-conquistas" id="grid-conquistas"></div>
+      </section>
+
+      <!-- Card Ofensiva de Meses Aportando -->
+      <section class="card">
+        <div class="card-topo">
+          <span class="label">🔥 Ofensiva de Aportes</span>
+          <span class="pill pill-fogo" id="streak-contador">0 meses</span>
+        </div>
+        <p class="dica" id="streak-aviso" style="margin: 6px 0 10px;">
+          Mantenha seus aportes todos os meses para não quebrar a sequência!
+        </p>
+        <div class="streak-grid" id="streak-meses-grid"></div>
+      </section>
+
+      <!-- Card Aporte do Mês -->
+      <section class="card">
+        <div class="card-topo">
+          <span class="label">Aporte neste Mês</span>
+          <span class="pill pill-azul" id="perc-aporte">0%</span>
+        </div>
+        <div class="valor-medio valor-sensivel" id="aporte-mes-atual">R$ 0,00</div>
+        <div class="barra-bg">
+          <div class="barra-fill barra-azul" id="barra-aporte" style="width: 0%"></div>
+        </div>
+        <div class="card-rodape">
+          <span>Meta/mês: <strong class="valor-sensivel" id="meta-aporte-label">R$ 0,00</strong></span>
+          <span class="valor-sensivel" id="falta-aporte-label">Faltam R$ 0,00</span>
+        </div>
+      </section>
+
+      <!-- Card Patrimônio Total -->
+      <section class="card">
+        <div class="card-topo">
+          <span class="label">Patrimônio & Retorno Real</span>
+          <span class="pill pill-cinza valor-sensivel" id="dividendos-mes-atual">Div. Mês: R$ 0,00</span>
+        </div>
+        <div class="valor-medio valor-sensivel" id="total-investido">R$ 0,00</div>
+        <div class="sub-linha">
+          <span>Na B3 hoje: <strong class="valor-sensivel" id="valor-mercado-total">Atualize a B3</strong></span>
+          <span class="valor-sensivel" id="retorno-total-geral"></span>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="mini-box">
+            <small>FIIs</small>
+            <strong class="valor-sensivel" id="total-fiis">R$ 0,00</strong>
+            <span class="valor-sensivel" id="renda-fiis">Rende R$ 0,00/mês</span>
+          </div>
+          <div class="mini-box">
+            <small>Ações</small>
+            <strong class="valor-sensivel" id="total-acoes">R$ 0,00</strong>
+            <span class="valor-sensivel" id="renda-acoes">Rende R$ 0,00/mês</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Card Projeção + Simulador de Aceleração -->
+      <section class="card card-info">
+        <span class="label">🚀 Projeção & Simulador de Aceleração</span>
+        <p id="texto-projecao" class="projecao-texto">
+          Cadastre seus ativos para calcular quanto patrimônio ainda é necessário.
+        </p>
+
+        <div class="simulador-box">
+          <div class="card-topo">
+            <label for="slider-extra" style="font-size:0.8rem; font-weight:700; color:#1e3a8a;">
+              E se eu aportar a mais por mês?
+            </label>
+            <strong id="slider-extra-label" style="color:#0284c7; font-size:0.9rem;">+ R$ 0</strong>
+          </div>
+          <input type="range" id="slider-extra" class="slider-range" min="0" max="2000" step="50" value="0" />
+          <p id="texto-simulador" class="dica" style="color:#1e40af; font-weight:600;"></p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ABA 2: CARTEIRA -->
+    <main id="tab-carteira" class="tab-content">
+      <div class="barra-acao">
+        <button id="btn-atualizar-b3" class="btn-b3" onclick="atualizarCotacoesECoach()">
+          🔄 Atualizar Cotações da B3
+        </button>
+        <small id="info-cotacao" class="dica-center">Toque acima para puxar preços atuais da bolsa</small>
+      </div>
+
+      <div class="filtros">
+        <button class="filtro-btn active" onclick="filtrarTipo('TODOS', this)">Todos</button>
+        <button class="filtro-btn" onclick="filtrarTipo('FII', this)">FIIs</button>
+        <button class="filtro-btn" onclick="filtrarTipo('ACAO', this)">Ações</button>
+      </div>
+
+      <div id="lista-ativos" class="lista-ativos"></div>
+    </main>
+
+    <!-- ABA 3: COACH -->
+    <main id="tab-coach" class="tab-content">
+      <button id="btn-analisar-coach" class="btn-coach" onclick="atualizarCotacoesECoach()">
+        🧠 Analisar Carteira & Radar Hoje
+      </button>
+
+      <section class="card">
+        <h2 class="titulo-secao">Diagnóstico Diário da Sua Carteira</h2>
+        <div id="coach-diagnostico" class="lista-dicas">
+          <p class="dica">Toque no botão acima para o Coach buscar as cotações da B3 e analisar sua carteira.</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Radar de Empresas Confiáveis</h2>
+        <p class="dica" style="margin-bottom: 10px;">
+          Acompanhe ativos sólidos (ex: ITUB4, BBAS3, TAEE11, MXRF11) para identificar quedas perto da mínima do ano.
+        </p>
+
+        <form id="form-radar" class="form-inline">
+          <input type="text" id="radar-ticker" placeholder="Ex: ITUB4" required style="text-transform: uppercase" />
+          <button type="submit">+ Vigiar</button>
+        </form>
+
+        <div id="lista-radar" class="lista-radar"></div>
+
+        <p class="aviso-legal">
+          * Análise matemática automática com base em preços históricos (52 semanas) e seu preço médio. Não é recomendação financeira oficial.
+        </p>
+      </section>
+    </main>
+
+    <!-- ABA 4: ANÁLISE & GRÁFICOS MÊS A MÊS -->
+    <main id="tab-analise" class="tab-content">
+      <section class="card">
+        <h2 class="titulo-secao">Filtros da Evolução</h2>
+        <div class="row-2">
+          <div>
+            <label class="label-mini">Ano</label>
+            <select id="filtro-ano" class="select-filtro"></select>
+          </div>
+          <div>
+            <label class="label-mini">Mês</label>
+            <select id="filtro-mes" class="select-filtro">
+              <option value="TODOS">Todos os meses</option>
+              <option value="01">Janeiro</option>
+              <option value="02">Fevereiro</option>
+              <option value="03">Março</option>
+              <option value="04">Abril</option>
+              <option value="05">Maio</option>
+              <option value="06">Junho</option>
+              <option value="07">Julho</option>
+              <option value="08">Agosto</option>
+              <option value="09">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="mini-box">
+            <small>Aportado (Filtro)</small>
+            <strong class="valor-sensivel" id="analise-total-aportes">R$ 0,00</strong>
+          </div>
+          <div class="mini-box">
+            <small>Dividendos (Filtro)</small>
+            <strong class="valor-sensivel" id="analise-total-divs" style="color:#059669">R$ 0,00</strong>
+          </div>
+          <div class="mini-box">
+            <small>Crescimento (Filtro)</small>
+            <strong class="valor-sensivel" id="analise-crescimento" style="color:#0284c7">R$ 0,00</strong>
+          </div>
+          <div class="mini-box">
+            <small>Patrimônio Acumulado</small>
+            <strong class="valor-sensivel" id="analise-patrimonio">R$ 0,00</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Crescimento Acumulado (Mês a Mês)</h2>
+        <div class="chart-box">
+          <canvas id="chart-evolucao"></canvas>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Aportes × Dividendos por Mês</h2>
+        <div class="chart-box">
+          <canvas id="chart-mensal"></canvas>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Detalhamento Mês a Mês</h2>
+        <div id="tabela-evolucao" class="tabela-evolucao"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Lançar Histórico (Mês Anterior)</h2>
+        <p class="dica" style="margin-bottom: 10px;">
+          Use aqui para registrar aportes ou dividendos de meses passados e montar seu gráfico completo.
+        </p>
+        <form id="form-historico" class="form-grid">
+          <div class="row-2">
+            <div>
+              <label>Mês / Ano</label>
+              <input type="month" id="hist-mes" required />
+            </div>
+            <div>
+              <label>Tipo</label>
+              <select id="hist-tipo">
+                <option value="APORTE">Aporte</option>
+                <option value="DIVIDENDO">Dividendo</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div>
+              <label>Ativo / Descrição</label>
+              <input type="text" id="hist-ticker" placeholder="Ex: MXRF11" required style="text-transform: uppercase" />
+            </div>
+            <div>
+              <label>Valor (R$)</label>
+              <input type="number" step="any" inputmode="decimal" id="hist-valor" placeholder="500.00" required />
+            </div>
+          </div>
+          <button type="submit" class="btn-secundario">Adicionar ao Histórico</button>
+        </form>
+      </section>
+    </main>
+
+    <!-- ABA 5: LANÇAR / METAS -->
+    <main id="tab-acoes" class="tab-content">
+      <section class="card">
+        <h2 class="titulo-secao">Cadastrar Ação ou FII</h2>
+        <form id="form-ativo" class="form-grid">
+          <div class="row-2">
+            <div>
+              <label>Ticker</label>
+              <input type="text" id="ativo-ticker" placeholder="Ex: ITUB4" required style="text-transform: uppercase" />
+            </div>
+            <div>
+              <label>Tipo</label>
+              <select id="ativo-tipo">
+                <option value="FII">FII</option>
+                <option value="ACAO">Ação</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label>Qtd. Cotas/Ações</label>
+              <input type="number" step="any" inputmode="decimal" id="ativo-qtd" placeholder="100" required />
+            </div>
+            <div>
+              <label>Preço Médio (R$)</label>
+              <input type="number" step="any" inputmode="decimal" id="ativo-pm" placeholder="10.20" required />
+            </div>
+          </div>
+
+          <div class="row-2">
+            <div>
+              <label>Informar rendimento por:</label>
+              <select id="ativo-modo-rend">
+                <option value="DY">DY (% ao ano)</option>
+                <option value="RS">R$ por mês/cota</option>
+              </select>
+            </div>
+            <div>
+              <label id="label-rend-valor">Dividend Yield (% a.a.)</label>
+              <input type="number" step="any" inputmode="decimal" id="ativo-rend-valor" placeholder="Ex: 9.5" />
+            </div>
+          </div>
+          <small id="preview-rendimento" class="dica" style="color: #059669; font-weight: 600;">
+            Opcional: informe o DY (%) da Rico/Google ou deixe vazio para preencher depois.
+          </small>
+
+          <label class="check-label">
+            <input type="checkbox" id="ativo-contar-aporte" />
+            Somar essa compra como aporte deste mês
+          </label>
+
+          <button type="submit" class="btn-primario">Salvar Ativo</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Metas & Conexão B3 (brapi.dev)</h2>
+        <form id="form-metas" class="form-grid">
+          <div class="row-2">
+            <div>
+              <label>Meta Renda/Mês (R$)</label>
+              <input type="number" step="any" inputmode="decimal" id="input-meta-renda" required />
+            </div>
+            <div>
+              <label>Meta Aporte/Mês (R$)</label>
+              <input type="number" step="any" inputmode="decimal" id="input-meta-aporte" required />
+            </div>
+          </div>
+
+          <div>
+            <label>Token gratuito brapi.dev (para FIIs e todas ações)</label>
+            <input type="text" id="input-brapi-token" placeholder="Cole seu token de brapi.dev (opcional)" />
+            <small class="dica">Sem token funcionam PETR4, ITUB4, VALE3 e MGLU3. Crie conta grátis em brapi.dev para liberar todos.</small>
+          </div>
+
+          <button type="submit" class="btn-secundario">Salvar Configurações</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Aportes deste Mês</h2>
+        <ul id="lista-aportes" class="lista-aportes"></ul>
+      </section>
+
+      <section class="card">
+        <h2 class="titulo-secao">Dividendos Recebidos neste Mês</h2>
+        <ul id="lista-dividendos" class="lista-aportes"></ul>
+      </section>
+    </main>
+
+    <!-- Navegação Inferior (5 abas) -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" onclick="mudarAba('resumo', this)">Resumo</button>
+      <button class="nav-btn" onclick="mudarAba('carteira', this)">Carteira</button>
+      <button class="nav-btn" onclick="mudarAba('coach', this)">Coach</button>
+      <button class="nav-btn" onclick="mudarAba('analise', this)">Análise</button>
+      <button class="nav-btn" onclick="mudarAba('acoes', this)">Metas</button>
+    </nav>
+  </div>
+
+  <!-- Modal Compra Rápida -->
+  <div id="modal-compra" class="modal hidden">
+    <div class="modal-box">
+      <h3 id="modal-titulo">Comprar Ativo</h3>
+      <form id="form-compra" class="form-grid">
+        <input type="hidden" id="compra-id" />
+        <label>Quantidade comprada agora</label>
+        <input type="number" step="any" inputmode="decimal" id="compra-qtd" placeholder="Ex: 10" required />
+        <label>Preço pago por cota (R$)</label>
+        <input type="number" step="any" inputmode="decimal" id="compra-preco" placeholder="Ex: 10.15" required />
+        <label>Rendimento mensal estimado/cota (R$)</label>
+        <input type="number" step="any" inputmode="decimal" id="compra-div" />
+        <div class="row-2">
+          <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+          <button type="submit" class="btn-primario">Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Lançar Dividendo Recebido -->
+  <div id="modal-dividendo" class="modal hidden">
+    <div class="modal-box">
+      <h3 id="modal-div-titulo">Recebi Dividendo</h3>
+      <form id="form-dividendo" class="form-grid">
+        <input type="hidden" id="div-ativo-id" />
+        <label>Valor líquido que caiu na Rico (R$)</label>
+        <input type="number" step="any" inputmode="decimal" id="div-valor" placeholder="Ex: 24.50" required />
+        <div class="row-2">
+          <button type="button" class="btn-cancelar" onclick="fecharModalDiv()">Cancelar</button>
+          <button type="submit" class="btn-primario">Somar no Retorno</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
